@@ -1,9 +1,4 @@
-import NextAuth, { NextAuthOptions } from "next-auth"
-import GoogleProvider from "next-auth/providers/google"
-import FacebookProvider from "next-auth/providers/facebook"
-import GithubProvider from "next-auth/providers/github"
-import TwitterProvider from "next-auth/providers/twitter"
-import Auth0Provider from "next-auth/providers/auth0"
+import NextAuth, { NextAuthOptions } from "next-auth";
 // import AppleProvider from "next-auth/providers/apple"
 // import EmailProvider from "next-auth/providers/email"
 
@@ -13,53 +8,72 @@ export const authOptions: NextAuthOptions = {
   // https://next-auth.js.org/configuration/providers/oauth
   providers: [
     /* EmailProvider({
-         server: process.env.EMAIL_SERVER,
-         from: process.env.EMAIL_FROM,
-       }),
-    // Temporarily removing the Apple provider from the demo site as the
-    // callback URL for it needs updating due to Vercel changing domains
+             server: process.env.EMAIL_SERVER,
+             from: process.env.EMAIL_FROM,
+           }),
+        // Temporarily removing the Apple provider from the demo site as the
+        // callback URL for it needs updating due to Vercel changing domains
+    
+        Providers.Apple({
+          clientId: process.env.APPLE_ID,
+          clientSecret: {
+            appleId: process.env.APPLE_ID,
+            teamId: process.env.APPLE_TEAM_ID,
+            privateKey: process.env.APPLE_PRIVATE_KEY,
+            keyId: process.env.APPLE_KEY_ID,
+          },
+        }),
+        */
 
-    Providers.Apple({
-      clientId: process.env.APPLE_ID,
-      clientSecret: {
-        appleId: process.env.APPLE_ID,
-        teamId: process.env.APPLE_TEAM_ID,
-        privateKey: process.env.APPLE_PRIVATE_KEY,
-        keyId: process.env.APPLE_KEY_ID,
+    {
+      id: "facebook",
+      name: "Facebook",
+      type: "oauth",
+      authorization:
+        "https://www.facebook.com/v11.0/dialog/oauth?scope=email#some_hashing",
+      token: "https://graph.facebook.com/oauth/access_token",
+      userinfo: {
+        url: "https://graph.facebook.com/me",
+        // https://developers.facebook.com/docs/graph-api/reference/user/#fields
+        params: { fields: "id,name,email,picture" },
+        async request({ tokens, client, provider }) {
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          return await client.userinfo(tokens.access_token!, {
+            // @ts-expect-error
+            params: provider.userinfo?.params,
+          });
+        },
       },
-    }),
-    */
-    FacebookProvider({
+      profile(profile) {
+        return {
+          id: profile.id,
+          name: profile.name,
+          email: profile.email,
+          image: profile.picture.data.url,
+        };
+      },
+      style: {
+        logo: "https://raw.githubusercontent.com/nextauthjs/next-auth/main/packages/next-auth/provider-logos/facebook.svg",
+        logoDark:
+          "https://raw.githubusercontent.com/nextauthjs/next-auth/main/packages/next-auth/provider-logos/facebook-dark.svg",
+        bg: "#fff",
+        text: "#006aff",
+        bgDark: "#006aff",
+        textDark: "#fff",
+      },
       clientId: process.env.FACEBOOK_ID,
       clientSecret: process.env.FACEBOOK_SECRET,
-    }),
-    GithubProvider({
-      clientId: process.env.GITHUB_ID,
-      clientSecret: process.env.GITHUB_SECRET,
-    }),
-    GoogleProvider({
-      clientId: process.env.GOOGLE_ID,
-      clientSecret: process.env.GOOGLE_SECRET,
-    }),
-    TwitterProvider({
-      clientId: process.env.TWITTER_ID,
-      clientSecret: process.env.TWITTER_SECRET,
-    }),
-    Auth0Provider({
-      clientId: process.env.AUTH0_ID,
-      clientSecret: process.env.AUTH0_SECRET,
-      issuer: process.env.AUTH0_ISSUER,
-    }),
+    },
   ],
   theme: {
     colorScheme: "light",
   },
   callbacks: {
     async jwt({ token }) {
-      token.userRole = "admin"
-      return token
+      token.userRole = "admin";
+      return token;
     },
   },
-}
+};
 
-export default NextAuth(authOptions)
+export default NextAuth(authOptions);
